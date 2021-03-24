@@ -1,0 +1,355 @@
+"""
+This program is made to tell the student user about studying departments,
+their courses and the credits of each course. The program can also be updated
+with new departments or courses and also any data inside
+the program can be deleted.
+"""
+
+#Global Error Value print out
+DEPARTMENT_ERROR = "Department not found!"
+
+def reading_file(file_name):
+    """
+    This function reads the file name from the entry, look it up and then
+    opens it. It arranges the file in lines in nested dictionaries, then it
+    returns the arranged dictionary
+    :param File_name: file from main entry
+    :return: Nested dict
+    """
+
+    #try function, to run the file
+    try:
+
+        # open the file
+        file = open(file_name, mode="r")
+
+        # empty dictionary, to be saved in it the entries
+        subjects_dictionary = {}
+
+        # for loop to read the lines in the file
+        for line in file:
+
+            # split the entries into 3 sections
+            departments, course_name, course_crdt = line.rstrip().split(";")
+
+            # create a dict if one does not exist
+            if departments not in subjects_dictionary:
+                subjects_dictionary[departments] = {}
+
+            # nest all the info in this dictionary arrangement:
+            subjects_dictionary[departments][course_name] = int(course_crdt)
+
+        # close the file
+        file.close()
+
+    #incase of error opening the file, run this custom error
+    except OSError:
+
+        #error message
+        print("Error opening file!")
+
+        #main dictionary value will be none
+        subjects_dictionary = None
+
+    #incase of error in the file values, run this custom error
+    except ValueError:
+
+        #error message
+        print("Error in file!")
+
+        # main dictionary value will be none
+        subjects_dictionary = None
+
+    #return the main dictionary
+    return subjects_dictionary
+
+def user_interface(dict):
+    """
+    This function is responsible for the user choice and leading other
+    functions to do the requirements according to the user command
+    :param dict: it takes the main dictionary.
+    :return: None or value of command entry
+    """
+
+    #While loop to run the command for the user
+    while True:
+
+        #the user menu
+        print("[A]dd / [C]redits / [D]elete / [P]rint all / "
+              "p[R]int department / [Q]uit")
+
+        #the command from the user
+        entry = input("Enter command: ")
+
+        #the command entry will be splitted into a list
+        lst = entry.split(" ")
+
+        #if the list entries bigger than a single word or letter entry
+        if len(lst) > 1:
+
+            #assign the entry into those variables
+
+            #course score credit will have the last entry
+            credit = lst[-1]
+
+            #Department will be the first word after the command letter
+            department = lst[1]
+
+            #course name will be from after the command till before the credit
+            course = ' '.join(lst[2:-1])
+
+            #command letter is the first in the entry
+            command = lst[0]
+
+            #if the command entry is C letter, run the credit function
+            if command == "c" or command == "C":
+                credit_calculator(dict, department)
+
+            #if the command entry is R letter, run the print department
+            #function
+            elif command == "r" or command == "R":
+                print_department(dict, department)
+
+            #if the command entry is A letter, run the add data function
+            elif command == "A" or command == "a":
+                add_data(dict, department, course, credit)
+
+            #if the command entry is D letter, run the delete data function
+            elif command == "D" or command == "d":
+
+                #this new assigning is to avoid deleting errors when entry is
+                #are only the department and course name without course credit.
+                course = ' '.join(lst[2:])
+                delete_data(dict, department, course)
+
+            #if entry not from menu, print this error value
+            else:
+                print()
+                print("Invalid command!")
+                print()
+
+        #if the entry list is equal to one word or letter
+        elif len(lst) == 1:
+            #the command letter is the lst only index
+            command = lst[0]
+
+            #if the command entry is Q letter, end the program
+            if command == "Q" or command == "q":
+                print("Ending program.")
+                return None
+
+            #if the command entry is P letter, run the print function
+            elif command == "P" or command == "p":
+                print_all(dict)
+
+            #if entry not from menu, print this error value
+            else:
+                print()
+                print("Invalid command!")
+                print()
+
+def print_all(dict):
+    """
+    prints all the departments inside the dictionary
+    :param dict: dictionary
+    """
+
+    print()
+
+    #loop to search inside the departments which inside the dictionary, which
+    #are assigned as keys.
+    for department in sorted(dict.keys()):
+
+       #print the department decorated
+        print(f"*{department}*")
+
+        #loop to search inside all the subjects inside each department
+        for course_subject in sorted(dict[department]):
+
+            #assigning the course credits to a specific variable
+            course_crdt = dict[department][course_subject]
+
+            #printing style
+            print(f"{course_subject} : {course_crdt} cr")
+
+    print()
+
+def print_department(dict, department):
+
+    """
+    This Function prints the department selected by the user separatly.
+    :param dict: Main dictionary
+    :param department: Selected department
+    """
+    print()
+
+    #if the department exist inside the main dictionary
+    if department in dict:
+
+        #print the department name in decoration
+        print(f"*{department}*")
+
+        #loop to search for the courses inside the department
+        for course_subject in sorted(dict[department]):
+
+            #assigning the course credit value to a variable
+            course_crdt = dict[department][course_subject]
+
+            #printing style
+            print(f"{course_subject} : {course_crdt} cr")
+
+    #if course not in department, print this error
+    else:
+        print(DEPARTMENT_ERROR)
+
+    print()
+
+def credit_calculator(dict, department):
+    """
+    This function takes the dictionary, and the selected department. then
+    calculates the credit points available from that department.
+    :param dict: Main dictionary
+    :param department: Selected department
+    """
+    print()
+
+    #if the department in the dictionary
+    if department in dict:
+
+        #empty variable assigned as an integer
+        result = 0
+
+        #loop to run in the keys and their values within the department items
+        for key, value in dict[department].items():
+
+            #sum all the department course credits into result variable
+            result += value
+
+        #printing results with the credits calculated
+        print(f"Department {department} has to offer {result} cr.")
+
+    #if department not found, print this error
+    else:
+        print(DEPARTMENT_ERROR)
+    print()
+
+def add_data(dict, department, course, credit):
+    """
+    This function adds new data to the dictionary, either a new department or
+    a new course inside a specific department
+    :param dict: Main dictionary
+    :param department: Selected department or added department
+    :param course: Added course
+    :param credit: Course credits
+    :return:
+    """
+
+    #try function to check for errors
+    try:
+
+        #if the entry does not have a course name, print an error message
+        if len(course) < 1:
+            print()
+            print("Invalid command!")
+            print()
+
+        #if the department entered exsist in the dictionary, update the
+        #department inside the dictionary
+        elif department in dict:
+            dict[department].update()
+
+            #printing message
+            print(f"Added course {course} to department {department}")
+
+        #if the department not in the dictionary, create a new department
+        elif department not in dict:
+
+            #create a new dictionary for the department
+            dict[department] = {}
+
+            #printing message
+            print(f"Added department {department} with course {course}")
+
+        #the arrangment that, the main dictionary has department as nested
+        #dictionary, then course as the key variable in department, and credit
+        #is the value of the key
+        dict[department][course] = int(credit)
+        print()
+
+    #to avoid errors in values and do not block the program from running.
+    except ValueError:
+        return
+
+def delete_data(dict, department, course):
+    """
+    This function deletes either a full department or a specific course inside
+    the department
+    :param dict: Main dictionary
+    :param department: Selected department
+    :param course: Selected course
+    """
+
+    print()
+
+    #if the department in the dictionary
+    if department in dict:
+
+        #if the entry longer than one word, then it means there is a course
+        #requested to be deleted.
+        if len(course) > 1 :
+
+            #if the course inside the department, delete it and print the
+            #confirmation
+            if course in dict[department]:
+
+                print(f"Department {department} "
+                      f"course {course} removed.")
+
+                #delete function
+                del dict[department][course]
+
+            #if the course note in the department, print an error message
+            elif course not in dict[department]:
+
+                print(f"Course {course} "
+                      f"from {department} not found!")
+
+        #if the entry is just one word, then a department only is requested to
+        #be deleted
+        else:
+            #delete the department and print a confirmation message
+            print(f"Department {department} removed.")
+
+            del dict[department]
+
+    #if the entry not in department, print an error message
+    else:
+        print(f"Department {department} not found!")
+
+    print()
+
+def main():
+    """
+    takes the user file name, checks it into reading file function, then
+    forward it to user interface function to give several results options.
+    :return: none when file reading result in an error
+    """
+
+    #takes the file name which will be opened from the user entry
+    file_name = input("Enter file name: ")
+
+    #runs the file into the reading file function and save it into data
+    #variable
+    data = reading_file(file_name)
+
+    #if the variable has none value, end the program
+    if data == None:
+        return
+
+    #if the variable has values, run it into the user interface function
+    else:
+        user_interface(data)
+
+if __name__ == "__main__":
+    main()
+
